@@ -1,0 +1,13 @@
+.env
+
+data_wavendb
+public/pages
+public/index.html
+public/waven_page.json
+
+infra/.terraform.lock.hcl
+infra/.terraform
+infra/main.tf
+infra/terraform.tfstate
+infra/.terraform.tfstate.lock.info
+infra/terraform.tfstate.backup
