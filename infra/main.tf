@@ -14,50 +14,23 @@ provider "aws" {
 }
 
 # Bucket
-resource "aws_s3_bucket" "waventopbucket" {
-  bucket = "waventopbucket"
+resource "aws_s3_bucket" "waventop" {
+  bucket = "waventop"
   force_destroy = true
 }
 
 # Access
-resource "aws_s3_bucket_public_access_block" "waventopbucket" {
-  bucket = aws_s3_bucket.waventopbucket.id
+resource "aws_s3_bucket_public_access_block" "waventop" {
+  bucket = aws_s3_bucket.waventop.id
   block_public_acls = false
   block_public_policy = false
   ignore_public_acls = true
   restrict_public_buckets = false
 }
 
-# Upload
-# Directory ./public/ is uploaded to s3
-# resource "aws_s3_object" "provision_source_files" {
-#   bucket = aws_s3_bucket.waventopbucket.id
-#   for_each = fileset("../public/", "**/*.*")
-#   key = each.value
-#   source = "../public/${each.value}"
-#   # content_type = "text/html"
-#   content_type = each.value.content_type
-# }
-
-# # Upload only index.html
-# resource "aws_s3_object" "object" {
-#   bucket = aws_s3_bucket.waventopbucket.id
-#   key = "index.html"
-#   source = "../public/index.html"
-#   content_type = "text/html; charset=utf-8;"
-# }
-
-# # Upload only 1 page
-# resource "aws_s3_object" "object2" {
-#   bucket = aws_s3_bucket.waventopbucket.id
-#   key = "pages/page=1&version=3.html"
-#   source = "../public/pages/page=1&version=3.html"
-#   content_type = "text/html; charset=utf-8;"
-# }
-
 # Creating Bucket Policy
 resource "aws_s3_bucket_policy" "public_read_access" {
-  bucket = aws_s3_bucket.waventopbucket.id
+  bucket = aws_s3_bucket.waventop.id
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -70,8 +43,8 @@ resource "aws_s3_bucket_policy" "public_read_access" {
         "s3:GetObject"
         ],
       "Resource": [
-        "${aws_s3_bucket.waventopbucket.arn}",
-        "${aws_s3_bucket.waventopbucket.arn}/*"
+        "${aws_s3_bucket.waventop.arn}",
+        "${aws_s3_bucket.waventop.arn}/*"
       ]
     }
   ]
@@ -81,9 +54,9 @@ EOF
 
 # Output variables
 output "object_s3_uri" {
-  value = "https://${aws_s3_bucket.waventopbucket.id}.s3.${aws_s3_bucket.waventopbucket.region}.amazonaws.com/index.html"
+  value = "https://${aws_s3_bucket.waventop.id}.s3.${aws_s3_bucket.waventop.region}.amazonaws.com/index.html"
 }
 output "bucket_id" {
-  value = aws_s3_bucket.waventopbucket.id
+  value = aws_s3_bucket.waventop.id
   description = "Bucket Name (aka ID)"
 }

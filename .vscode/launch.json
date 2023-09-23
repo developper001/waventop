@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "WavenDbTop",
+            "name": "WavenTop",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/src/wavenDbTop.py",
+            "program": "${workspaceFolder}/src/wavenTop.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }

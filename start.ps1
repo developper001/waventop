@@ -33,17 +33,19 @@ function InfraDestroy {
 
 function Build {
     echo "Building static pages ..."
-    python src/wavenDbTop.py
+    python src/wavenTop.py
 }
 
 function Sync {
     echo "Sync static pages ..."
     $tfoutput = (Get-Content 'infra\tf_output.json' | Out-String | ConvertFrom-Json)
     $s3_bucket_id = $tfoutput.bucket_id.value
+    $s3_uri = $tfoutput.object_s3_uri.value
     aws configure set region "$env:AWS_REGION"
     aws configure set aws_access_key_id "$env:AWS_ACCESS_KEY"
     aws configure set aws_secret_access_key "$env:AWS_SECRET_KEY"
     aws s3 sync --delete "./public" "s3://$s3_bucket_id"
+    echo "[Success] WavenTop available at $s3_uri"
 }
 
 function Run {

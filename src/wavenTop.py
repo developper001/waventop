@@ -48,7 +48,7 @@ class WavenDbTop:
   builds_per_equipment_to_print = 5
   current_directory = pathlib.Path().resolve()
   home_link_desc = "Home"
-  home_text = "Waven Top Stuff"
+  home_text = "WavenTop"
   github_url="https://github.com/developper001/waventop"
   css = f'''
     table, th, td {{
