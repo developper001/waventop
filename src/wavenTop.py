@@ -88,11 +88,15 @@ class WavenDbTop:
         text("Waventop")
       text(" is an opensource website used to find which item is valuable based on Wavendb top builds.")
     with tag('div'):
+      text("- Use same query parameter convention as")
+      with tag('a', target='_blank', rel='noopener noreferrer', title="wavendb", href=f"{self.config['wavendb_url']}"):
+        text(f"{self.config['wavendb_url']}")
+    with tag('div'):
       text("- ")
       with tag('b'):
         text("Open source")
       text("github code at")
-      with tag('a', klass='', href=f"{self.github_url}"):
+      with tag('a', target='_blank', rel='noopener noreferrer', title="github", href=f"{self.github_url}"):
         text(f"{self.github_url}")
     with tag('div'):
       text(f"- Last update date : ")
