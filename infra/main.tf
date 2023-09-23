@@ -13,54 +13,13 @@ provider "aws" {
   region = local.AWS_REGION
 }
 
+# Bucket
 resource "aws_s3_bucket" "waventopbucket" {
   bucket = "waventopbucket"
   force_destroy = true
 }
 
-# resource "aws_s3_bucket_website_configuration" "waventopbucket" {
-#     bucket = aws_s3_bucket.waventopbucket.id
-#     index_document {
-#       suffix = "index.html"
-#     }
-#     error_document {
-#       key = "index.html"
-#     }
-# }
-
-# resource "aws_s3_bucket_acl" "waventopbucket" {
-#   bucket = aws_s3_bucket.waventopbucket.id
-#   acl = "public-read"
-# }
-
-# resource "aws_s3_bucket_policy" "waventopbucket" {
-#   bucket = aws_s3_bucket.waventopbucket.id
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Sid = "PublicReadGetObject"
-#         Effect = "Allow"
-#         Principal = "*"
-#         Action = "s3:GetObject"
-#         Resource = [
-#           aws_s3_bucket.waventopbucket.arn,
-#           "${aws_s3_bucket.s3_bucket.arn}/*",
-#         ]
-#       },
-#     ]
-#   })
-# }
-
-# Directory ./public/ is uploaded to s3
-resource "aws_s3_object" "provision_source_files" {
-  bucket = aws_s3_bucket.waventopbucket.id
-  for_each = fileset("../public/", "**/*.*")
-  key = each.value
-  source = "../public/${each.value}"
-  content_type = each.value
-}
-
+# Access
 resource "aws_s3_bucket_public_access_block" "waventopbucket" {
   bucket = aws_s3_bucket.waventopbucket.id
   block_public_acls = false
@@ -69,11 +28,53 @@ resource "aws_s3_bucket_public_access_block" "waventopbucket" {
   restrict_public_buckets = false
 }
 
-# output "domain" {
-#   description = "Domain name of the bucket"
-#   value       = aws_s3_bucket_website_configuration.waventopbucket.website_domain
+# Upload
+# Directory ./public/ is uploaded to s3
+# resource "aws_s3_object" "provision_source_files" {
+#   bucket = aws_s3_bucket.waventopbucket.id
+#   for_each = fileset("../public/", "**/*.*")
+#   key = each.value
+#   source = "../public/${each.value}"
+#   # content_type = "text/html"
+#   content_type = each.value.content_type
 # }
 
+# Upload only index.html
+resource "aws_s3_object" "object" {
+  bucket = aws_s3_bucket.waventopbucket.id
+  # for_each = fileset("../public/", "**/*.*")
+  key = "index.html"
+  source = "../public/index.html"
+  content_type = "text/html"
+}
+
+# Creating Bucket Policy
+resource "aws_s3_bucket_policy" "public_read_access" {
+  bucket = aws_s3_bucket.waventopbucket.id
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetObject"
+        ],
+      "Resource": [
+        "${aws_s3_bucket.waventopbucket.arn}",
+        "${aws_s3_bucket.waventopbucket.arn}/${aws_s3_object.object.key}"
+      ]
+    }
+  ]
+}
+EOF
+}
+# aws_s3_bucket.waventopbucket.arn,
+#   "${aws_s3_bucket.waventopbucket.arn}/*",
+
+# View URL
 output "object_s3_uri" {
   value = "https://${aws_s3_bucket.waventopbucket.id}.s3.${aws_s3_bucket.waventopbucket.region}.amazonaws.com/index.html"
 }
