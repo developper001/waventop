@@ -1,9 +1,10 @@
 import json
-from yattag import Doc, indent
-import requests
-from pyquery import PyQuery    
-import os, shutil
 import pathlib
+import requests
+import os, shutil
+from pyquery import PyQuery    
+from datetime import datetime
+from yattag import Doc, indent
 
 class WavenDbTop:
   config = {
@@ -82,9 +83,21 @@ class WavenDbTop:
 
   def generate_site_description(self, tag, text, current_uri):
     with tag('div', id='top'):
-        text("Waventop is an opensource website used to find which item is valuable based on Wavendb top builds.")
-        with tag('a', klass='', href=f"{self.github_url}"):
-          text(f"Open source github code at {self.github_url}")
+      text("- ")
+      with tag('b'):
+        text("Waventop")
+      text(" is an opensource website used to find which item is valuable based on Wavendb top builds.")
+    with tag('div'):
+      text("- ")
+      with tag('b'):
+        text("Open source")
+      text("github code at")
+      with tag('a', klass='', href=f"{self.github_url}"):
+        text(f"{self.github_url}")
+    with tag('div'):
+      text(f"- Last update date : ")
+      with tag('b'):
+        text(f"{datetime.today().strftime('%Y-%m-%d')}")
 
   def generate_menus(self, tag, text, current_uri, is_index):
     with tag('div', id='menu'):
