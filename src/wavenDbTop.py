@@ -5,7 +5,7 @@ from pyquery import PyQuery
 import os, shutil
 import pathlib
 
-class WavenDbTopEquipementParser:
+class WavenDbTop:
   config = {
     'wavendb_url': 'https://wavendb.com',
     'wavendb_uris_to_analyse': {
@@ -48,6 +48,7 @@ class WavenDbTopEquipementParser:
   current_directory = pathlib.Path().resolve()
   home_link_desc = "Home"
   home_text = "Waven Top Stuff"
+  github_url="https://github.com/developper001/waventop"
   css = f'''
     table, th, td {{
       border: 1px solid grey;
@@ -78,6 +79,12 @@ class WavenDbTopEquipementParser:
       align-items: center;
     }}
   '''
+
+  def generate_site_description(self, tag, text, current_uri):
+    with tag('div', id='top'):
+        text("Waventop is an opensource website used to find which item is valuable based on Wavendb top builds.")
+        with tag('a', klass='', href=f"{self.github_url}"):
+          text(f"Open source github code at {self.github_url}")
 
   def generate_menus(self, tag, text, current_uri, is_index):
     with tag('div', id='menu'):
@@ -145,18 +152,20 @@ class WavenDbTopEquipementParser:
       with tag('body'):
         self.generate_menus(tag, text, uri, False)
         self.generate_content(tag, text, items)
+        self.generate_site_description(tag, text, uri)
     self.generate_html(f"{self.config['public_pages']}/{uri}", doc)
 
   def generate_index_html(self):
-    index_uri='index'
+    uri='index'
     doc, tag, text = Doc().tagtext()
     with tag('html'):
       self.generate_header(tag, text, doc)
       with tag('body'):
-        self.generate_menus(tag, text, index_uri, True)
+        self.generate_menus(tag, text, uri, True)
         with tag('h3'):
           text(self.home_text)
-    self.generate_html(f"{self.config['public']}/{index_uri}", doc)
+        self.generate_site_description(tag, text, uri)
+    self.generate_html(f"{self.config['public']}/{uri}", doc)
 
   def update_stats(self, build, all_equipments, stats):
     build_id = build["id"]
@@ -330,6 +339,8 @@ class WavenDbTopEquipementParser:
   def run(self):
     self.clean_old_data()
     wavendb_uris_to_analyse = self.config['wavendb_uris_to_analyse']
+    print(f"** index.html")
+    self.generate_index_html()
     for uri_desc in wavendb_uris_to_analyse:
       print(f"* {uri_desc}")
       uri = wavendb_uris_to_analyse[uri_desc]
@@ -338,8 +349,6 @@ class WavenDbTopEquipementParser:
       res = self.generate_results(d)
       # self.print_console(res)
       self.generate_static_web_page(res, uri)
-    print(f"** index.html")
-    self.generate_index_html()
 
-w = WavenDbTopEquipementParser()
+w = WavenDbTop()
 w.run()

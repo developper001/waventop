@@ -13,44 +13,67 @@ provider "aws" {
   region = local.AWS_REGION
 }
 
-resource "aws_s3_bucket" "waventop-bucket" {
-  bucket = "waventop-bucket"
+resource "aws_s3_bucket" "waventopbucket" {
+  bucket = "waventopbucket"
   force_destroy = true
 }
 
-resource "aws_s3_bucket_public_access_block" "waventop-bucket" {
-  bucket = aws_s3_bucket.waventop-bucket.id
+# resource "aws_s3_bucket_website_configuration" "waventopbucket" {
+#     bucket = aws_s3_bucket.waventopbucket.id
+#     index_document {
+#       suffix = "index.html"
+#     }
+#     error_document {
+#       key = "index.html"
+#     }
+# }
 
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
+# resource "aws_s3_bucket_acl" "waventopbucket" {
+#   bucket = aws_s3_bucket.waventopbucket.id
+#   acl = "public-read"
+# }
+
+# resource "aws_s3_bucket_policy" "waventopbucket" {
+#   bucket = aws_s3_bucket.waventopbucket.id
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Sid = "PublicReadGetObject"
+#         Effect = "Allow"
+#         Principal = "*"
+#         Action = "s3:GetObject"
+#         Resource = [
+#           aws_s3_bucket.waventopbucket.arn,
+#           "${aws_s3_bucket.s3_bucket.arn}/*",
+#         ]
+#       },
+#     ]
+#   })
+# }
 
 # Directory ./public/ is uploaded to s3
 resource "aws_s3_object" "provision_source_files" {
-  bucket = aws_s3_bucket.waventop-bucket.id
+  bucket = aws_s3_bucket.waventopbucket.id
   for_each = fileset("../public/", "**/*.*")
   key = each.value
   source = "../public/${each.value}"
   content_type = each.value
 }
 
-# resource "aws_s3_bucket_policy" "bucket_policy" {
-#   bucket = aws_s3_bucket.waventop.id
+resource "aws_s3_bucket_public_access_block" "waventopbucket" {
+  bucket = aws_s3_bucket.waventopbucket.id
+  block_public_acls = false
+  block_public_policy = false
+  ignore_public_acls = true
+  restrict_public_buckets = false
+}
 
-#   policy = <<POLICY
-# {
-#   "Version":"2012-10-17",
-#   "Statement":[
-#     {
-#       "Sid":"PublicReadGetObject",
-#       "Effect":"Allow",
-#       "Principal": "*",
-#       "Action":["s3:GetObject"],
-#       "Resource":["arn:aws:s3:::${aws_s3_bucket.waventop.id}/*"]
-#     }
-#   ]
+# output "domain" {
+#   description = "Domain name of the bucket"
+#   value       = aws_s3_bucket_website_configuration.waventopbucket.website_domain
 # }
-# POLICY
-# }
+
+output "object_s3_uri" {
+  value = "https://${aws_s3_bucket.waventopbucket.id}.s3.${aws_s3_bucket.waventopbucket.region}.amazonaws.com/index.html"
+}

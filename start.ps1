@@ -30,8 +30,7 @@ function InfraDestroy {
 
 function Build {
     echo "Building static pages ..."
-    cd .\src
-    python wavenDbTopEquipementParser.py
+    python src/wavenDbTop.py
 }
 
 function CdCurrentDirectory {
