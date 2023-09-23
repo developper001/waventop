@@ -1,5 +1,5 @@
 # Usage: .\start.ps1
-# Requires : opentofu (go), python3
+# Requires : python3, opentofu (go), aws cli, jq
 # Execute SetRemoteSignedPolicy the first time to grant execution policy to this script
 param(
   [String] $Command
@@ -10,6 +10,8 @@ function HelpMessage() {
     echo " infraInit        Init infra from scratch"
     echo " infraDestroy     Destroy infra"
     echo " build            Build static pages in public with Python"
+    echo " sync             Upload local files to the s3 bucket"
+    echo " run              Build and sync if infra already exists"
 }
 
 function InfraInit {
@@ -19,6 +21,7 @@ function InfraInit {
     opentofu init
     opentofu plan
     opentofu apply -auto-approve
+    opentofu output -json > ./tf_output.json
 }
 
 function InfraDestroy {
@@ -31,6 +34,21 @@ function InfraDestroy {
 function Build {
     echo "Building static pages ..."
     python src/wavenDbTop.py
+}
+
+function Sync {
+    echo "Sync static pages ..."
+    $tfoutput = (Get-Content 'infra\tf_output.json' | Out-String | ConvertFrom-Json)
+    $s3_bucket_id = $tfoutput.bucket_id.value
+    aws configure set region "$env:AWS_REGION"
+    aws configure set aws_access_key_id "$env:AWS_ACCESS_KEY"
+    aws configure set aws_secret_access_key "$env:AWS_SECRET_KEY"
+    aws s3 sync --delete "./public" "s3://$s3_bucket_id"
+}
+
+function Run {
+    Build
+    Sync
 }
 
 function CdCurrentDirectory {
@@ -48,7 +66,6 @@ function Main {
             $name, $value = $_.split('=')
             set-content env:\$name $value
         }
-
         # Command to function
         if ($Command -eq "infraInit") {
             InfraInit
@@ -56,6 +73,10 @@ function Main {
             InfraDestroy
         } elseif ($Command -eq "build") {
             Build
+        } elseif ($Command -eq "sync") {
+            Sync
+        } elseif ($Command -eq "run") {
+            Run
         } else {
             Set-PSDebug -Trace 0
             echo "Command '$Command' not found."
@@ -63,7 +84,7 @@ function Main {
         }
     }
     catch {
-        Write-Warning "An error occurred"
+        Write-Warning "$_"
     }
     finally {
         CdCurrentDirectory # Back to current directory

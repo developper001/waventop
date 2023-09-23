@@ -39,14 +39,21 @@ resource "aws_s3_bucket_public_access_block" "waventopbucket" {
 #   content_type = each.value.content_type
 # }
 
-# Upload only index.html
-resource "aws_s3_object" "object" {
-  bucket = aws_s3_bucket.waventopbucket.id
-  # for_each = fileset("../public/", "**/*.*")
-  key = "index.html"
-  source = "../public/index.html"
-  content_type = "text/html"
-}
+# # Upload only index.html
+# resource "aws_s3_object" "object" {
+#   bucket = aws_s3_bucket.waventopbucket.id
+#   key = "index.html"
+#   source = "../public/index.html"
+#   content_type = "text/html; charset=utf-8;"
+# }
+
+# # Upload only 1 page
+# resource "aws_s3_object" "object2" {
+#   bucket = aws_s3_bucket.waventopbucket.id
+#   key = "pages/page=1&version=3.html"
+#   source = "../public/pages/page=1&version=3.html"
+#   content_type = "text/html; charset=utf-8;"
+# }
 
 # Creating Bucket Policy
 resource "aws_s3_bucket_policy" "public_read_access" {
@@ -64,17 +71,19 @@ resource "aws_s3_bucket_policy" "public_read_access" {
         ],
       "Resource": [
         "${aws_s3_bucket.waventopbucket.arn}",
-        "${aws_s3_bucket.waventopbucket.arn}/${aws_s3_object.object.key}"
+        "${aws_s3_bucket.waventopbucket.arn}/*"
       ]
     }
   ]
 }
 EOF
 }
-# aws_s3_bucket.waventopbucket.arn,
-#   "${aws_s3_bucket.waventopbucket.arn}/*",
 
-# View URL
+# Output variables
 output "object_s3_uri" {
   value = "https://${aws_s3_bucket.waventopbucket.id}.s3.${aws_s3_bucket.waventopbucket.region}.amazonaws.com/index.html"
+}
+output "bucket_id" {
+  value = aws_s3_bucket.waventopbucket.id
+  description = "Bucket Name (aka ID)"
 }

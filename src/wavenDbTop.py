@@ -135,6 +135,8 @@ class WavenDbTop:
 
   def generate_header(self, tag, text, doc):
     with tag('head'):
+      with tag('meta', charset="utf-8"):
+        text('')
       with tag('title'):
         text(self.home_text)
       with tag('style'):
