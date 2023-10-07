@@ -20,8 +20,8 @@ class WavenDbTop:
       'Xélor': 'page=1&god=7&version=3',
       'Sacri': 'page=1&god=8&version=3',
       'Bouvaloir Orok': 'page=1&weapon=497&version=3',
-      'Scalpel Apostruker': 'page=1&weapon=490&version=3',
-      'Aiguille Pikuxala': 'page=1&weapon=637&version=3',
+      'Scalpel Apostruker': 'page=1&weapon=637&version=3',
+      'Aiguille Pikuxala': 'page=1&weapon=945&version=3',
       'Écorcheur Shugen': 'page=1&weapon=36&version=3',
       'Lame Voracius': 'page=1&weapon=202&version=3',
       'Synchronisateur Tako': 'page=1&weapon=490&version=3',
@@ -70,9 +70,14 @@ class WavenDbTop:
     .a_selected {{
       font-weight: bold;
     }}
-    img {{
+    .rarity_img {{
       max-width: 55px;
       height: auto;
+    }}
+    .stuff_img {{
+      max-width: 55px;
+      height: auto;
+      position: absolute;
     }}
     .stuff_with_img {{
       display: flex;
@@ -134,7 +139,9 @@ class WavenDbTop:
               # Stuff
               with tag('td'):
                 with tag('div', klass='stuff_with_img'):
-                  with tag('img', src=f"{self.config['wavendb_url']}/img/equipment/{item['details']['img']}.png.webp"):
+                  with tag('img', src=f"{self.config['wavendb_url']}/img/equipment/{item['details']['rarity']}.png.webp", klass='rarity_img'):
+                    text('')
+                  with tag('img', src=f"{self.config['wavendb_url']}/img/equipment/{item['details']['img']}.png.webp", klass='stuff_img'):
                     with tag('b'):
                       text(f"{item['nom']} ({item['nb']})")
               # Build
@@ -187,81 +194,27 @@ class WavenDbTop:
     self.generate_html(f"{self.config['public']}/{uri}", doc)
 
   def update_stats(self, build, all_equipments, stats):
-    build_id = build["id"]
-    build_link = build["link"]
-    build_name = build["name"]
-    build_type = build["type"]
-    build_views = build["views"]
-    # build_level = build["level"]
-    # build_hpStat1 = build["hpStat1"]
-    # build_hpStat3 = build["hpStat3"]
-    # build_hpStat10 = build["hpStat10"]
-    # build_hpStat15 = build["hpStat15"]
-    # build_attackStat1 = build["attackStat1"]
-    # build_attackStat3 = build["attackStat3"]
-    # build_attackStat10 = build["attackStat10"]
-    # build_attackStat15 = build["attackStat15"]
-    # build_game_version_id = build["game_version_id"]
-    # build_weapon_id = build["weapon_id"]
-    # build_user_id = build["user_id"]
-    build_god_id = build["god_id"]
-    build_created_at = build["created_at"]
-    build_updated_at = build["updated_at"]
-    # build_hash = build["hash"]
-    # build_private = build["private"]
-    # build_video_link = build["video_link"]
-    build_description = build["description"]
-    build_likes_count = build["likes_count"]
-    # build_companion_runes = build["companion_runes"]
-    # build_equipment_runes = build["equipment_runes"]
-    # build_spell_runes = build["spell_runes"]
-    # build_god_spells = build["god_spells"]
-    # build_weapon_spells = build["weapon_spells"]
-    # build_god_skills = build["god_skills"]
-    # build_spells = build["spells"]
-    # build_weapon = build["weapon"]
-    build_game_version = build["game_version"]
-    # build_user = build["user"]
-    # build_companions = build["companions"]
     build_equipments = build["equipments"]
-
-    # Equipements
     for equipement in build_equipments:
       equipement_id = equipement["id"]
-      # equipement_img = equipement["img"]
-      # equipement_rarity = equipement["rarity"]
-      equipement_name_fr = equipement["name_fr"]
-      # equipement_name_en = equipement["name_en"]
-      # equipement_name_es = equipement["name_es"]
-      # equipement_name_pt = equipement["name_pt"]
-      # equipement_name_de = equipement["name_de"]
-      # equipement_description_fr = equipement["description_fr"]
-      # equipement_description_en = equipement["description_en"]
-      # equipement_description_es = equipement["description_es"]
-      # equipement_description_pt = equipement["description_pt"]
-      # equipement_description_de = equipement["description_de"]
-      # equipement_pivot = equipement["pivot"]
-      # equipement_skills = equipement["skills"]
-
       # Link with all_equipments
       equipement_join = [e for e in all_equipments if e['id'] == equipement_id]
-
       # Statistics
       s = {
-        'build_id': build_id,
-        'build_link': build_link,
-        'build_name': build_name,
-        'build_type': build_type,
-        'build_views': build_views,
-        'build_god_id': build_god_id,
-        'build_created_at': build_created_at,
-        'build_updated_at': build_updated_at,
-        'build_description': build_description,
-        'build_likes_count': build_likes_count,
-        'build_game_version': build_game_version,
-        'build_equipments': build_equipments,
+        'build_id': build["id"],
+        'build_link': build["link"],
+        'build_name': build["name"],
+        'build_type': build["type"],
+        'build_views': build["views"],
+        'build_god_id': build["god_id"],
+        'build_created_at': build["created_at"],
+        'build_updated_at': build["updated_at"],
+        'build_description': build["description"],
+        'build_likes_count': build["likes_count"],
+        'build_game_version': build["game_version"],
+        'build_equipments': build["equipments"],
         'equipement_id': equipement_id,
-        'equipement_name_fr': equipement_name_fr,
+        'equipement_name_fr': equipement["name_fr"],
         'equipement_details': equipement_join[0] if (len(equipement_join) >= 1) else None,
       }
       if equipement_id in stats:
