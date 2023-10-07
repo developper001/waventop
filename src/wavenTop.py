@@ -11,20 +11,20 @@ class WavenDbTop:
     'wavendb_url': 'https://wavendb.com',
     'wavendb_uris_to_analyse': {
       'All Page 1': 'page=1&version=3',
-      'All Page 2': 'page=2&version=3',
-      'All Page 3': 'page=3&version=3',
-      'Iop': 'page=1&god=1&version=3',
-      'Crâ': 'page=1&god=2&version=3',
-      'Eniripsa': 'page=1&god=3&version=3',
-      'Sram': 'page=1&god=6&version=3',
-      'Xélor': 'page=1&god=7&version=3',
-      'Sacri': 'page=1&god=8&version=3',
-      'Bouvaloir Orok': 'page=1&weapon=497&version=3',
-      'Scalpel Apostruker': 'page=1&weapon=637&version=3',
-      'Aiguille Pikuxala': 'page=1&weapon=945&version=3',
-      'Écorcheur Shugen': 'page=1&weapon=36&version=3',
-      'Lame Voracius': 'page=1&weapon=202&version=3',
-      'Synchronisateur Tako': 'page=1&weapon=490&version=3',
+      # 'All Page 2': 'page=2&version=3',
+      # 'All Page 3': 'page=3&version=3',
+      # 'Iop': 'page=1&god=1&version=3',
+      # 'Crâ': 'page=1&god=2&version=3',
+      # 'Eniripsa': 'page=1&god=3&version=3',
+      # 'Sram': 'page=1&god=6&version=3',
+      # 'Xélor': 'page=1&god=7&version=3',
+      # 'Sacri': 'page=1&god=8&version=3',
+      # 'Bouvaloir Orok': 'page=1&weapon=497&version=3',
+      # 'Scalpel Apostruker': 'page=1&weapon=637&version=3',
+      # 'Aiguille Pikuxala': 'page=1&weapon=945&version=3',
+      # 'Écorcheur Shugen': 'page=1&weapon=36&version=3',
+      # 'Lame Voracius': 'page=1&weapon=202&version=3',
+      # 'Synchronisateur Tako': 'page=1&weapon=490&version=3',
     },
     'public': 'public',
     'pages': 'pages',
@@ -130,7 +130,7 @@ class WavenDbTop:
         with tag('tbody'):
           item_count = 0
           for item in items:
-            if item['stats'][0]['equipement_details']['type'] != type:
+            if item['stats'][0]['equipements']['type'] != type:
               continue
             if item_count >= self.config['max_items']:
                 continue
@@ -151,9 +151,10 @@ class WavenDbTop:
                     text('')
                   else:
                     stat = item['stats'][stat_index]
-                    hover_text = f"{stat['build_name']}\n{stat['build_likes_count']} likes\n{stat['build_views']} views\n\n{stat['build_description']}"
-                    with tag('a', target='_blank', rel='noopener noreferrer', title=hover_text, href=f"{self.config['wavendb_url']}/builds/show/{stat['build_link']}"):
-                      build_name_short = stat['build_name'][:self.config['max_build_name_length']]
+                    build = stat['build']
+                    hover_text = f"{build['name']}\n{build['likes_count']} likes\n{build['views']} views\n\n{build['description']}"
+                    with tag('a', target='_blank', rel='noopener noreferrer', title=hover_text, href=f"{self.config['wavendb_url']}/builds/show/{build['link']}"):
+                      build_name_short = build['name'][:self.config['max_build_name_length']]
                       build_name_nospaces = " ".join(build_name_short.split())
                       text(build_name_nospaces)
 
@@ -194,28 +195,13 @@ class WavenDbTop:
     self.generate_html(f"{self.config['public']}/{uri}", doc)
 
   def update_stats(self, build, all_equipments, stats):
-    build_equipments = build["equipments"]
-    for equipement in build_equipments:
+    for equipement in build["equipments"]:
       equipement_id = equipement["id"]
-      # Link with all_equipments
       equipement_join = [e for e in all_equipments if e['id'] == equipement_id]
-      # Statistics
       s = {
-        'build_id': build["id"],
-        'build_link': build["link"],
-        'build_name': build["name"],
-        'build_type': build["type"],
-        'build_views': build["views"],
-        'build_god_id': build["god_id"],
-        'build_created_at': build["created_at"],
-        'build_updated_at': build["updated_at"],
-        'build_description': build["description"],
-        'build_likes_count': build["likes_count"],
-        'build_game_version': build["game_version"],
-        'build_equipments': build["equipments"],
-        'equipement_id': equipement_id,
-        'equipement_name_fr': equipement["name_fr"],
-        'equipement_details': equipement_join[0] if (len(equipement_join) >= 1) else None,
+        'build': build,
+        'equipements': equipement_join[0] if (len(equipement_join) >= 1) else None,
+        'companions': build["companions"],
       }
       if equipement_id in stats:
         stats[equipement_id].append(s)
@@ -227,9 +213,10 @@ class WavenDbTop:
     for item in items[:nb_to_print]:
       stat_details = ''
       for stat in item['stats'][:self.builds_per_equipment_to_print]:
+        build = stat['build']
         build_name_short = stat['build_name'][:self.build_name_max_length_to_print]
         build_name_nospaces = " ".join(build_name_short.split())
-        stat_details += f"({stat['build_god_id']} {stat['build_likes_count']} {stat['build_views']}) {build_name_nospaces} "
+        stat_details += f"({build['god_id']} {build['likes_count']} {build['views']}) {build_name_nospaces} "
       print(f" [{item['nb']}] {item['nom']}: {stat_details}")
 
   def generate_results(self, d):
@@ -244,11 +231,11 @@ class WavenDbTop:
     # Sort stats
     res = []
     for equipement_id, statistic in stats.items():
-      statistic.sort(key=lambda val: -val['build_likes_count']) # Sort by likes, used by print
+      statistic.sort(key=lambda val: -val['build']['likes_count']) # Sort by likes, used by print
       res.append({
         'nb': len(statistic),
-        'nom': statistic[0]['equipement_name_fr'],
-        'details': statistic[0]['equipement_details'],
+        'nom': statistic[0]['equipements']['name_fr'],
+        'details': statistic[0]['equipements'],
         'stats': statistic
       })
     res.sort(key=lambda val: -len(val['stats']))
@@ -256,8 +243,8 @@ class WavenDbTop:
 
   def print_console(self, res):
     # Split equipements by type
-    self.anneaux = [x for x in res if x['stats'][0]['equipement_details']['type'] == 1]
-    self.brassards = [x for x in res if x['stats'][0]['equipement_details']['type'] == 2]
+    self.anneaux = [x for x in res if x['stats'][0]['equipements']['type'] == 1]
+    self.brassards = [x for x in res if x['stats'][0]['equipements']['type'] == 2]
     # View results
     self.print(self.anneaux, 10, "Anneaux")
     self.print(self.brassards, 10, "Brassards")
