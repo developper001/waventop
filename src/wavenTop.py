@@ -11,20 +11,20 @@ class WavenDbTop:
     'wavendb_url': 'https://wavendb.com',
     'wavendb_uris_to_analyse': {
       'All Page 1': 'page=1&version=3',
-      # 'All Page 2': 'page=2&version=3',
-      # 'All Page 3': 'page=3&version=3',
-      # 'Iop': 'page=1&god=1&version=3',
-      # 'Crâ': 'page=1&god=2&version=3',
-      # 'Eniripsa': 'page=1&god=3&version=3',
-      # 'Sram': 'page=1&god=6&version=3',
-      # 'Xélor': 'page=1&god=7&version=3',
-      # 'Sacri': 'page=1&god=8&version=3',
-      # 'Bouvaloir Orok': 'page=1&weapon=497&version=3',
-      # 'Scalpel Apostruker': 'page=1&weapon=637&version=3',
-      # 'Aiguille Pikuxala': 'page=1&weapon=945&version=3',
-      # 'Écorcheur Shugen': 'page=1&weapon=36&version=3',
-      # 'Lame Voracius': 'page=1&weapon=202&version=3',
-      # 'Synchronisateur Tako': 'page=1&weapon=490&version=3',
+      'All Page 2': 'page=2&version=3',
+      'All Page 3': 'page=3&version=3',
+      'Iop': 'page=1&god=1&version=3',
+      'Crâ': 'page=1&god=2&version=3',
+      'Eniripsa': 'page=1&god=3&version=3',
+      'Sram': 'page=1&god=6&version=3',
+      'Xélor': 'page=1&god=7&version=3',
+      'Sacri': 'page=1&god=8&version=3',
+      'Bouvaloir Orok': 'page=1&weapon=497&version=3',
+      'Scalpel Apostruker': 'page=1&weapon=637&version=3',
+      'Aiguille Pikuxala': 'page=1&weapon=945&version=3',
+      'Écorcheur Shugen': 'page=1&weapon=36&version=3',
+      'Lame Voracius': 'page=1&weapon=202&version=3',
+      'Synchronisateur Tako': 'page=1&weapon=490&version=3',
     },
     'public': 'public',
     'pages': 'pages',
@@ -41,6 +41,10 @@ class WavenDbTop:
       2: {
         'id': 'brassards',
         'name': 'Brassards',
+      },
+      3: {
+        'id': 'compagnons',
+        'name': 'Compagnons',
       },
     },
   }
@@ -126,11 +130,14 @@ class WavenDbTop:
 
   def generate_content(self, tag, text, items):
     for type in self.config['type']:
+      type_key = 'equipements' if (type == 1 or type == 2) else 'compagnons'
       with tag('table', id='table'):
         with tag('tbody'):
           item_count = 0
           for item in items:
-            if item['stats'][0]['equipements']['type'] != type:
+            stats = item['stats']
+            # TODO : if compagnons : special case
+            if stats[0]['equipements']['type'] != type:
               continue
             if item_count >= self.config['max_items']:
                 continue
@@ -143,14 +150,14 @@ class WavenDbTop:
                     text('')
                   with tag('img', src=f"{self.config['wavendb_url']}/img/equipment/{item['details']['img']}.png.webp", klass='stuff_img'):
                     with tag('b'):
-                      text(f"{item['nom']} ({item['nb']})")
+                      text(f"{item['details']['name_fr']} ({item['nb']})")
               # Build
               for stat_index in range(self.config['max_builds_per_equipment']):
                 with tag('td'):
-                  if stat_index >= len(item['stats']):
+                  if stat_index >= len(stats):
                     text('')
                   else:
-                    stat = item['stats'][stat_index]
+                    stat = stats[stat_index]
                     build = stat['build']
                     hover_text = f"{build['name']}\n{build['likes_count']} likes\n{build['views']} views\n\n{build['description']}"
                     with tag('a', target='_blank', rel='noopener noreferrer', title=hover_text, href=f"{self.config['wavendb_url']}/builds/show/{build['link']}"):
@@ -222,33 +229,21 @@ class WavenDbTop:
   def generate_results(self, d):
     # Read data
     props = d['props']
-    builds = props['builds']['data']
-    all_equipments = props['equipments']
     # Builds
     stats = {}
-    for build in builds:
-      self.update_stats(build, all_equipments, stats)
+    for build in props['builds']['data']:
+      self.update_stats(build, props['equipments'], stats)
     # Sort stats
     res = []
     for equipement_id, statistic in stats.items():
       statistic.sort(key=lambda val: -val['build']['likes_count']) # Sort by likes, used by print
       res.append({
         'nb': len(statistic),
-        'nom': statistic[0]['equipements']['name_fr'],
         'details': statistic[0]['equipements'],
         'stats': statistic
       })
     res.sort(key=lambda val: -len(val['stats']))
     return res
-
-  def print_console(self, res):
-    # Split equipements by type
-    self.anneaux = [x for x in res if x['stats'][0]['equipements']['type'] == 1]
-    self.brassards = [x for x in res if x['stats'][0]['equipements']['type'] == 2]
-    # View results
-    self.print(self.anneaux, 10, "Anneaux")
-    self.print(self.brassards, 10, "Brassards")
-    print("\n")
 
   def read_from_old_file(self, old_file_path):
     with open(old_file_path, encoding="utf-8") as f:
@@ -294,6 +289,15 @@ class WavenDbTop:
     self.remove_all_files_in_folder(self.config['data_wavendb'])
     self.remove_all_files_in_folder(self.config['public_pages'])
     self.remove_file(self.current_directory, f"{self.config['public']}/index.html")
+
+  # def print_console(self, res):
+  #   # Split equipements by type
+  #   self.anneaux = [x for x in res if x['stats'][0]['equipements']['type'] == 1]
+  #   self.brassards = [x for x in res if x['stats'][0]['equipements']['type'] == 2]
+  #   # View results
+  #   self.print(self.anneaux, 10, "Anneaux")
+  #   self.print(self.brassards, 10, "Brassards")
+  #   print("\n")
 
   def run(self):
     self.clean_old_data()
