@@ -1,5 +1,5 @@
 # Description
-Waventop is an opensource website used to find which item is valuable based on Wavendb top builds.  
+Waventop is an opensource website used to find which item is valuable in Waven, based on Wavendb top builds.  
 Generate static pages from wavendb.com with most used items.  
 Deploy on a public s3 bucket.  
 
