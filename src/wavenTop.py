@@ -50,7 +50,8 @@ class WavenDbTop:
     'pages': 'pages',
     'public_pages': 'public/pages',
     'data_wavendb': 'data_wavendb',
-    'max_items': 20,
+    'max_equipements': 15,
+    'max_companions': 15,
     'max_builds_per_equipment': 5,
     'max_build_name_length': 35,
     'type': {
@@ -63,8 +64,8 @@ class WavenDbTop:
         'name': 'Brassards',
       },
       3: {
-        'id': 'compagnons',
-        'name': 'Compagnons',
+        'id': 'companions',
+        'name': 'Companions',
       },
     },
   }
@@ -148,42 +149,66 @@ class WavenDbTop:
         with tag('a', klass=a_class, href=a_href):
           text(uri_menu_desc)
 
-  def generate_content(self, tag, text, items):
+  def generate_equipements(self, tag, text, equipement, equipement_stats):
+    with tag('tr'):
+      # Stuff
+      with tag('td'):
+        with tag('div', klass='stuff_with_img'):
+          with tag('img', src=f"{self.config['wavendb_url']}/img/equipment/{equipement['details']['rarity']}.png.webp", klass='rarity_img'):
+            text('')
+          with tag('img', src=f"{self.config['wavendb_url']}/img/equipment/{equipement['details']['img']}.png.webp", klass='stuff_img'):
+            with tag('b'):
+              text(f"{equipement['details']['name_fr']} ({equipement['nb']})")
+      # Build
+      for equipement_stat_index in range(self.config['max_builds_per_equipment']):
+        with tag('td'):
+          if equipement_stat_index >= len(equipement_stats):
+            text('')
+          else:
+            equipement_stat = equipement_stats[equipement_stat_index]
+            build = equipement_stat['build']
+            hover_text = f"{build['name']}\n{build['likes_count']} likes\n{build['views']} views\n\n{build['description']}"
+            with tag('a', target='_blank', rel='noopener noreferrer', title=hover_text, href=f"{self.config['wavendb_url']}/builds/show/{build['link']}"):
+              build_name_short = build['name'][:self.config['max_build_name_length']]
+              build_name_nospaces = " ".join(build_name_short.split())
+              text(build_name_nospaces)
+
+  def generate_companions(self, tag, text, companion, companion_stats):
+    # TODO : companion['details'] is an array. Make stats earlyer for each element of this array
+    with tag('tr'):
+      with tag('td'):
+        with tag('div', klass='stuff_with_img'):
+          with tag('img', src=f"{self.config['wavendb_url']}/img/companions/cadre_{companion['details']['rarity']}.png.webp", klass='rarity_img'):
+            text('')
+          with tag('img', src=f"{self.config['wavendb_url']}/img/companions/{companion['details']['img']}.png.webp", klass='stuff_img'):
+            with tag('b'):
+              text(f"{companion['details']['name_fr']} ({companion['nb']})")
+
+  def generate_content(self, tag, text, data):
     for type in self.config['type']:
-      type_key = 'equipements' if (type == 1 or type == 2) else 'compagnons'
+      type_id = self.config['type'][type]['id']
       with tag('table', id='table'):
         with tag('tbody'):
-          item_count = 0
-          for item in items:
-            stats = item['stats']
-            # TODO : if compagnons : special case
-            if stats[0]['equipements']['type'] != type:
-              continue
-            if item_count >= self.config['max_items']:
+          equipements_data, companions_data = data
+          if type_id in ['anneaux', 'brassards']:
+            equipement_count = 0
+            for equipement in equipements_data:
+              equipement_stats = equipement['stats']
+              if equipement_count >= self.config['max_equipements']:
                 continue
-            item_count += 1
-            with tag('tr'):
-              # Stuff
-              with tag('td'):
-                with tag('div', klass='stuff_with_img'):
-                  with tag('img', src=f"{self.config['wavendb_url']}/img/equipment/{item['details']['rarity']}.png.webp", klass='rarity_img'):
-                    text('')
-                  with tag('img', src=f"{self.config['wavendb_url']}/img/equipment/{item['details']['img']}.png.webp", klass='stuff_img'):
-                    with tag('b'):
-                      text(f"{item['details']['name_fr']} ({item['nb']})")
-              # Build
-              for stat_index in range(self.config['max_builds_per_equipment']):
-                with tag('td'):
-                  if stat_index >= len(stats):
-                    text('')
-                  else:
-                    stat = stats[stat_index]
-                    build = stat['build']
-                    hover_text = f"{build['name']}\n{build['likes_count']} likes\n{build['views']} views\n\n{build['description']}"
-                    with tag('a', target='_blank', rel='noopener noreferrer', title=hover_text, href=f"{self.config['wavendb_url']}/builds/show/{build['link']}"):
-                      build_name_short = build['name'][:self.config['max_build_name_length']]
-                      build_name_nospaces = " ".join(build_name_short.split())
-                      text(build_name_nospaces)
+              if equipement_stats[0]['equipements']['type'] != type:
+                continue
+              self.generate_equipements(tag, text, equipement, equipement_stats)
+              equipement_count += 1
+          elif type_id == 'companions':
+            continue # TODO : code this
+            companion_count = 0
+            for companion in companions_data:
+              companion_stats = companion['stats']
+              if companion_count >= self.config['max_companions']:
+                continue
+              self.generate_companions(tag, text, companion, companion_stats)
+              companion_count += 1
 
   def generate_header(self, tag, text, doc):
     with tag('head'):
@@ -199,13 +224,13 @@ class WavenDbTop:
     with open(f"{html_filename}.html", "w", encoding="utf-8") as file:
       file.write(html)
 
-  def generate_static_web_page(self, items, uri):
+  def generate_static_web_page(self, data, uri):
     doc, tag, text = Doc().tagtext()
     with tag('html'):
       self.generate_header(tag, text, doc)
       with tag('body'):
         self.generate_menus(tag, text, uri, False)
-        self.generate_content(tag, text, items)
+        self.generate_content(tag, text, data)
         self.generate_site_description(tag, text, uri)
     self.generate_html(f"{self.config['public_pages']}/{uri}", doc)
 
@@ -221,20 +246,6 @@ class WavenDbTop:
         self.generate_site_description(tag, text, uri)
     self.generate_html(f"{self.config['public']}/{uri}", doc)
 
-  def update_stats(self, build, all_equipments, stats):
-    for equipement in build["equipments"]:
-      equipement_id = equipement["id"]
-      equipement_join = [e for e in all_equipments if e['id'] == equipement_id]
-      s = {
-        'build': build,
-        'equipements': equipement_join[0] if (len(equipement_join) >= 1) else None,
-        'companions': build["companions"],
-      }
-      if equipement_id in stats:
-        stats[equipement_id].append(s)
-      else:
-        stats[equipement_id] = [s]
-
   def print(self, items, nb_to_print, item_type):
     print(f"\nTop {nb_to_print} {item_type} :")
     for item in items[:nb_to_print]:
@@ -246,24 +257,55 @@ class WavenDbTop:
         stat_details += f"({build['god_id']} {build['likes_count']} {build['views']}) {build_name_nospaces} "
       print(f" [{item['nb']}] {item['nom']}: {stat_details}")
 
-  def generate_results(self, d):
-    # Read data
+  def update_stats(self, build, all_equipments, stats):
+    stats_equipement = stats['equipement']
+    for equipement in build['equipments']:
+      equipement_id = equipement['id']
+      equipement_join = [e for e in all_equipments if e['id'] == equipement_id]
+      equipement_stat = {
+        'build': build,
+        'equipements': equipement_join[0] if (len(equipement_join) >= 1) else None,
+      }
+      if equipement_id in stats_equipement:
+        stats_equipement[equipement_id].append(equipement_stat)
+      else:
+        stats_equipement[equipement_id] = [equipement_stat]
+    stats_companions = stats['companions']
+    for compagnon in build['companions']:
+      compagnon_id = compagnon['id']
+      compagnon_stat = {
+        'build': build,
+        'companions': build['companions'],
+      }
+      if compagnon_id in stats_companions:
+        stats_companions[compagnon_id].append(compagnon_stat)
+      else:
+        stats_companions[compagnon_id] = [compagnon_stat]
+
+  def generate_data(self, d):
     props = d['props']
-    # Builds
-    stats = {}
+    stats = {'equipement': {}, 'companions': {}}
     for build in props['builds']['data']:
       self.update_stats(build, props['equipments'], stats)
-    # Sort stats
-    res = []
-    for equipement_id, statistic in stats.items():
+    equipements_data = []
+    for _, statistic in stats['equipement'].items():
       statistic.sort(key=lambda val: -val['build']['likes_count']) # Sort by likes, used by print
-      res.append({
+      equipements_data.append({
         'nb': len(statistic),
         'details': statistic[0]['equipements'],
         'stats': statistic
       })
-    res.sort(key=lambda val: -len(val['stats']))
-    return res
+    equipements_data.sort(key=lambda val: -len(val['stats']))
+    companions_data = []
+    for _, statistic in stats['companions'].items():
+      statistic.sort(key=lambda val: -val['build']['likes_count']) # Sort by likes, used by print
+      companions_data.append({
+        'nb': len(statistic),
+        'details': statistic[0]['companions'],
+        'stats': statistic
+      })
+      companions_data.sort(key=lambda val: -len(val['stats']))
+    return equipements_data, companions_data
 
   def read_from_old_file(self, old_file_path):
     with open(old_file_path, encoding="utf-8") as f:
@@ -310,15 +352,6 @@ class WavenDbTop:
     self.remove_all_files_in_folder(self.config['public_pages'])
     self.remove_file(self.current_directory, f"{self.config['public']}/index.html")
 
-  # def print_console(self, res):
-  #   # Split equipements by type
-  #   self.anneaux = [x for x in res if x['stats'][0]['equipements']['type'] == 1]
-  #   self.brassards = [x for x in res if x['stats'][0]['equipements']['type'] == 2]
-  #   # View results
-  #   self.print(self.anneaux, 10, "Anneaux")
-  #   self.print(self.brassards, 10, "Brassards")
-  #   print("\n")
-
   def run(self):
     self.clean_old_data()
     wavendb_uris_to_analyse = self.config['wavendb_uris_to_analyse']
@@ -329,9 +362,8 @@ class WavenDbTop:
       uri = wavendb_uris_to_analyse[uri_desc]
       d = self.request_wavendb_for_data(uri, save_wavendb_file=False)
       # d = self.read_from_old_file(f"{self.config['data_wavendb']}/{uri}.json")
-      res = self.generate_results(d)
-      # self.print_console(res)
-      self.generate_static_web_page(res, uri)
+      data = self.generate_data(d)
+      self.generate_static_web_page(data, uri)
 
 w = WavenDbTop()
 w.run()
