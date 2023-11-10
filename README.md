@@ -12,7 +12,8 @@ Deploy on a public s3 bucket.
 ./start.sh # See available commands and generate .env
 # Edit .env file to add AWS credentials
 ./start.sh infraInit # Create s3 bucket
-./start.sh build # create static pages
+./start.sh build # create local static pages
+./start.sh sync # upload to s3
 # ./start.sh infraDestroy # Destroy s3 bucket
 ```
 
