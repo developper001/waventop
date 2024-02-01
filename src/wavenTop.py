@@ -133,6 +133,10 @@ class WavenDbTop:
       text(f"- Last update date : ")
       with tag('b'):
         text(f"{datetime.today().strftime('%Y-%m-%d')}")
+    with tag('div'):
+      text(f"- Wavendb version : ")
+      with tag('b'):
+        text(f"{self.api_version}")
 
   def generate_menus(self, tag, text, current_uri, is_index):
     with tag('div', id='menu'):
