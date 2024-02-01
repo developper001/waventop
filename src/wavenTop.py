@@ -7,7 +7,7 @@ from datetime import datetime
 from yattag import Doc, indent
 
 class WavenDbTop:
-  api_version = '4'
+  api_version = '5'
   config = {
     'wavendb_url': 'https://wavendb.com',
     'wavendb_uris_to_analyse': {
@@ -45,6 +45,7 @@ class WavenDbTop:
       'Surin': f'page=1&weapon=937&version={api_version}',
       'Tako': f'page=1&weapon=490&version={api_version}',
       'Voldorak': f'page=1&weapon=953&version={api_version}',
+      'Astramantis': f'page=1&weapon=619&version={api_version}',
     },
     'public': 'public',
     'pages': 'pages',
